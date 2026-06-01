@@ -285,6 +285,7 @@ createApp({
 
     // ── Download ──
     async function startDownload(){
+      if(downloading.value)return;
       const u=urlInput.value.trim();if(!u)return;
       downloading.value=true;
       try{
