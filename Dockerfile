@@ -16,7 +16,7 @@ COPY . .
 # 创建输出目录
 RUN mkdir -p videodl_outputs logs
 
-EXPOSE 8000
+EXPOSE 9999
 
 ENV VIDEODL_OUTPUT=/app/videodl_outputs
 

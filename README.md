@@ -31,7 +31,7 @@ pip install git+https://github.com/CharlesPikachu/videodl.git
 python server.py
 ```
 
-打开 http://localhost:8000
+打开 http://localhost:9999
 
 ### Docker 部署
 
@@ -46,7 +46,7 @@ docker compose up -d
 `server.py` 最底部：
 
 ```python
-uvicorn.run(app, host="0.0.0.0", port=8000)  # 改这里
+uvicorn.run(app, host="0.0.0.0", port=9999)  # 改这里
 ```
 
 或者在启动时指定：
@@ -69,7 +69,7 @@ server {
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:9999;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";  # WebSocket 必须

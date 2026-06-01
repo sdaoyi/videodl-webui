@@ -6,7 +6,7 @@ services:
     container_name: videodl-webui
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "9999:9999"
     volumes:
       - ./videodl_outputs:/app/videodl_outputs
       - ./logs:/app/logs

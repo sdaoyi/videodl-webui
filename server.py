@@ -464,5 +464,5 @@ if __name__ == "__main__":
     os.chdir(str(_BASE_DIR))  # 确保 videodl 输出到项目目录
     print(f"Download dir: {OUTPUT_DIR}")
     print(f"Log dir:     {LOG_DIR}")
-    print(f"Open:        http://localhost:8000")
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    print(f"Open:        http://localhost:9999")
+    uvicorn.run(app, host="0.0.0.0", port=9999, log_level="info")
