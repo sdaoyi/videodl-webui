@@ -126,10 +126,8 @@ def _extract_image_urls(info) -> list[str] | None:
                             for img in images:
                                 url_list = img.get("url_list", [])
                                 if url_list:
-                                    # 选质量最高的（通常最后一个）
-                                    u = url_list[-1]
-                                    # 移除 watermask 相关参数获得原图
-                                    u = _re.sub(r'~tplv-dy-[^?]+', '', u)
+                                    # 用第一个 URL（不同 CDN 域名，更稳定）
+                                    u = url_list[0]
                                     urls.append(u)
                             if urls:
                                 return urls
@@ -442,7 +440,13 @@ async def serve_video(p: str = ""):
         return HTMLResponse("file not found", status_code=404)
     # 根据扩展名判断 MIME 类型
     ext = full_path.suffix.lower()
-    mime_map = {".mp4": "video/mp4", ".webm": "video/webm", ".mkv": "video/x-matroska", ".mov": "video/quicktime", ".avi": "video/x-msvideo", ".flv": "video/x-flv", ".ts": "video/mp2t"}
+    mime_map = {
+        ".mp4": "video/mp4", ".webm": "video/webm", ".mkv": "video/x-matroska",
+        ".mov": "video/quicktime", ".avi": "video/x-msvideo", ".flv": "video/x-flv",
+        ".ts": "video/mp2t",
+        ".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+        ".png": "image/png", ".gif": "image/gif", ".bmp": "image/bmp",
+    }
     return FileResponse(full_path, media_type=mime_map.get(ext, "video/mp4"))
 
 

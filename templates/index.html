@@ -192,17 +192,20 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
         <div v-for="f in files" :key="f.rel_path" class="file-card">
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0 flex-1">
-              <span>{{ f.name.match(/\.(mp4|webm|mkv|mov|avi|flv)$/i) ? '🎬' : '📄' }}</span>
+              <span>{{ isImage(f.name) ? '🖼️' : isVideo(f.name) ? '🎬' : '📄' }}</span>
               <div class="min-w-0 flex-1">
                 <p class="text-sm truncate" :title="f.name">{{ f.name }}</p>
                 <p class="text-xs" :style="{color:'var(--text-muted)'}">{{ f.size_str }}</p>
               </div>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-              <button v-if="f.video_url" @click="playVideo(f.video_url, f.name)" class="play-btn" title="播放">
+              <button v-if="isVideo(f.name)" @click="playVideo(f.video_url, f.name)" class="play-btn" title="播放">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#a78bfa"><polygon points="8 5 19 12 8 19 8 5"/></svg>
               </button>
-              <button @click="openFile(f.video_url)" class="btn-icon" title="打开文件">
+              <button v-if="isImage(f.name)" @click="openFile(f.video_url)" class="btn-icon" title="查看图片">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </button>
+              <button v-if="!isImage(f.name) && !isVideo(f.name) && f.video_url" @click="openFile(f.video_url)" class="btn-icon" title="打开文件">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
               </button>
               <button @click="deleteFile(f.rel_path, f.name)" class="btn-icon" title="删除文件">
@@ -367,6 +370,8 @@ createApp({
     // ── Helpers ──
     function statusIcon(s){return {queued:'⏳',parsing:'🔍',downloading:'📥',completed:'✅',failed:'❌'}[s]||'⏳'}
     function timeAgo(ts){if(!ts)return '';const s=Math.floor(Date.now()/1000-ts);if(s<60)return '刚刚';if(s<3600)return Math.floor(s/60)+' 分钟前';return Math.floor(s/3600)+' 小时前'}
+    function isVideo(n){return /\.(mp4|webm|mkv|mov|avi|flv|ts)$/i.test(n||'')}
+    function isImage(n){return /\.(webp|jpg|jpeg|png|gif|bmp)$/i.test(n||'')}
 
     // ── Lifecycle ──
     onMounted(()=>{
@@ -383,7 +388,7 @@ createApp({
     return{
       isDark,wsConnected,urlInput,platformInput,downloading,tasks,files,outputDir,platforms,
       playerVisible,playerTitle,playerNarrow,playerSquare,playerVideoRef,sakuraPetals,
-      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo
+      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo,isVideo,isImage
     };
   }
 }).mount('#app');
