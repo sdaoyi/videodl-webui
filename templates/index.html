@@ -326,9 +326,10 @@ createApp({
         const parts=f.rel_path.split('/');
         if(parts.length>1){
           const key=parts[0];
-          if(!groups[key]) groups[key]={key,name:key,children:[],totalSize:0,isGroup:true,expanded:!!groupExpanded.value[key]};
+          if(!groups[key]) groups[key]={key,name:key,children:[],totalSize:0,allImages:true,expanded:!!groupExpanded.value[key]};
           groups[key].children.push(f);
           groups[key].totalSize+=f.size;
+          if(!isImage(f.name)) groups[key].allImages=false;
         }else{
           singles.push({...f, isGroup:false, key:f.rel_path});
         }
@@ -336,9 +337,16 @@ createApp({
       const result=[...singles];
       for(const k in groups){
         const g=groups[k];
-        g.totalSize=_fmtSize(g.totalSize);
-        g.expanded=!!groupExpanded.value[k];
-        result.push(g);
+        if(g.allImages && g.children.length>=2){
+          g.isGroup=true;
+          g.totalSize=_fmtSize(g.totalSize);
+          g.expanded=!!groupExpanded.value[k];
+          result.push(g);
+        }else{
+          for(const f of g.children){
+            singles.push({...f, isGroup:false, key:f.rel_path});
+          }
+        }
       }
       return result;
     });
