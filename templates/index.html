@@ -307,6 +307,9 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
       <div class="flex items-center justify-between px-5 py-3.5 border-b" :style="{borderColor:'var(--border)'}">
         <h3 class="text-sm font-medium truncate max-w-md">{{ imageTitle }}</h3>
         <div class="flex items-center gap-2">
+          <a :href="imageSrc" download class="btn-icon" title="下载" style="text-decoration:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </a>
           <button @click="deleteCurrent" class="btn-icon" title="删除此文件" style="color:#ef4444">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
@@ -333,6 +336,9 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
       <div class="flex items-center justify-between px-5 py-3.5 border-b" :style="{borderColor:'var(--border)'}">
         <h3 class="text-sm font-medium truncate max-w-md">{{ playerTitle }}</h3>
         <div class="flex items-center gap-2">
+          <a :href="downloadUrl" download class="btn-icon" title="下载" style="text-decoration:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </a>
           <button @click="deleteCurrent" class="btn-icon" title="删除此文件" style="color:#ef4444">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
@@ -423,6 +429,11 @@ createApp({
     });
 
     const allVideos=computed(()=>files.value.filter(f=>isVideo(f.name)));
+
+    const downloadUrl=computed(()=>{
+      const f=galleryItems.value[galleryIdx.value];
+      return f?.video_url || imageSrc.value || '';
+    });
 
     function allVideoIdx(name){
       return allVideos.value.findIndex(f=>f.name===name);
@@ -654,7 +665,7 @@ createApp({
     return{
       isDark,wsConnected,urlInput,platformInput,downloading,tasks,files,outputDir,platforms,
       playerVisible,playerTitle,playerNarrow,playerSquare,playerVideoRef,sakuraPetals,
-      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo,isVideo,isImage,recentTasks,removeTask,groupedFiles,toggleGroup,deleteGroup,viewImage,closeImage,imageVisible,imageTitle,imageSrc,allVideos,allVideoIdx,prevInGallery,nextInGallery,galleryIdx,galleryItems,onWheel,onTouchStart,onTouchEnd,deleteCurrent
+      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo,isVideo,isImage,recentTasks,removeTask,groupedFiles,toggleGroup,deleteGroup,viewImage,closeImage,imageVisible,imageTitle,imageSrc,allVideos,allVideoIdx,prevInGallery,nextInGallery,galleryIdx,galleryItems,onWheel,onTouchStart,onTouchEnd,deleteCurrent,downloadUrl
     };
   }
 }).mount('#app');
