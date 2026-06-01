@@ -14,7 +14,7 @@ tailwind.config={darkMode:'class',theme:{extend:{colors:{sakura:{400:'#f472b6',5
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *{font-family:'Inter',system-ui,sans-serif;scrollbar-width:thin}
-:root{--bg:#0a0a1a;--surface:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--text:#eef2f8;--text-muted:rgba(255,255,255,0.6);--accent:#a78bfa;--pink:#ec4899}
+:root{--bg:#191926;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#f0f4ff;--text-muted:rgba(255,255,255,0.75);--accent:#c4b5fd;--pink:#f9a8d4}
 .light{--bg:#f8fafc;--surface:rgba(255,255,255,0.8);--border:rgba(0,0,0,0.08);--text:#0f172a;--text-muted:rgba(0,0,0,0.55);--accent:#7c3aed;--pink:#db2777}
 body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;min-height:100vh}
 .glass{background:var(--surface);border:1px solid var(--border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
@@ -27,7 +27,7 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
 .btn-icon:hover{background:rgba(168,85,247,0.15);color:var(--accent);border-color:rgba(168,85,247,0.3)}
 .input-bar input,.input-bar select{background:transparent;border:none;outline:none;color:var(--text);height:48px;padding:0 16px;font-size:14px}
 .input-bar input::placeholder{color:var(--text-muted)}
-.input-bar select{opacity:.7;cursor:pointer;border-left:1px solid var(--border)}
+.input-bar select{cursor:pointer;border-left:1px solid var(--border)}
 .input-bar select option{background:#1a1a2e;color:#e4e4e7}
 .light .input-bar select option{background:#fff;color:#1e293b}
 .light .bg-glow{background:radial-gradient(ellipse at top right,rgba(168,85,247,0.06),transparent 60%),radial-gradient(ellipse at bottom left,rgba(236,72,153,0.04),transparent 60%)}
@@ -132,7 +132,7 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
     <!-- ===== TASK LIST ===== -->
     <section>
       <div class="flex items-center gap-3 mb-4">
-        <h2 class="text-xs font-semibold uppercase tracking-widest" :style="{opacity:.5}">下载任务</h2>
+        <h2 class="text-xs font-semibold uppercase tracking-widest" :style="{color:'var(--text-muted)'}">下载任务</h2>
         <div class="flex-1 h-px" :style="{background:'var(--border)'}"></div>
       </div>
       <div v-if="tasks.length === 0" class="py-16 text-center">
@@ -174,8 +174,8 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
     <!-- ===== FILE LIST ===== -->
     <section>
       <div class="flex items-center gap-3 mb-4">
-        <h2 class="text-xs font-semibold uppercase tracking-widest" :style="{opacity:.5}">已下载文件</h2>
-        <span class="text-xs truncate max-w-[300px]" :style="{color:'var(--text-muted)',opacity:.4}">{{ outputDir }}</span>
+        <h2 class="text-xs font-semibold uppercase tracking-widest" :style="{color:'var(--text-muted)'}">已下载文件</h2>
+        <span class="text-xs truncate max-w-[300px]" :style="{color:'var(--text-muted)'}">{{ outputDir }}</span>
         <button @click="loadFiles" class="btn-icon ml-auto" title="刷新文件列表">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         </button>
