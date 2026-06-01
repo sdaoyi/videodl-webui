@@ -134,6 +134,9 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
     <section>
       <div class="flex items-center gap-3 mb-4">
         <h2 class="text-xs font-semibold uppercase tracking-widest" :style="{color:'var(--text-muted)'}">下载任务</h2>
+        <button @click="loadHistory" class="btn-icon" title="刷新任务">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </button>
         <div class="flex-1 h-px" :style="{background:'var(--border)'}"></div>
       </div>
       <div v-if="tasks.length === 0" class="py-16 text-center">
@@ -185,7 +188,7 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
       <div v-if="files.length === 0" class="py-12 text-center">
         <p class="text-sm" :style="{color:'var(--text-muted)'}">暂无文件</p>
       </div>
-      <div v-else class="space-y-2">
+      <div v-else class="space-y-2" style="max-height:50vh;overflow-y:auto;scrollbar-width:thin">
         <div v-for="f in files" :key="f.rel_path" class="file-card">
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0 flex-1">
@@ -266,8 +269,7 @@ createApp({
       ws.onmessage=e=>{
         const d=JSON.parse(e.data);
         const i=tasks.value.findIndex(t=>t.id===d.id);
-        if(i>=0)Object.assign(tasks.value[i],d);
-        else tasks.value.unshift(d);
+        if(i>=0){Object.assign(tasks.value[i],d)}
       };
       ws.onclose=()=>{wsConnected.value=false;setTimeout(connectWS,3000)};
       ws.onerror=()=>ws.close();
