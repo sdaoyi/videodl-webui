@@ -360,7 +360,10 @@ async def serve_video(p: str = ""):
 @app.get("/")
 async def index():
     html_path = Path(__file__).parent / "templates" / "index.html"
-    return HTMLResponse(html_path.read_text(encoding="utf-8"))
+    return HTMLResponse(
+        html_path.read_text(encoding="utf-8"),
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+    )
 
 
 if __name__ == "__main__":
