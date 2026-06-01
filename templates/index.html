@@ -9,6 +9,7 @@
 tailwind.config={darkMode:'class',theme:{extend:{colors:{sakura:{400:'#f472b6',500:'#ec4899',600:'#db2777'},twilight:{50:'#f5f3ff',100:'#ede9fe',200:'#ddd6fe',300:'#c4b5fd',400:'#a78bfa',500:'#8b5cf6',600:'#7c3aed',900:'#0a0a1a'}},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}
 </script>
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://derdere.github.io/site-pet/site-pet.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *{font-family:'Inter',system-ui,sans-serif;scrollbar-width:thin}
@@ -28,6 +29,9 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
 .input-bar select{opacity:.7;cursor:pointer;border-left:1px solid var(--border)}
 .input-bar select option{background:#1a1a2e;color:#e4e4e7}
 .light .input-bar select option{background:#fff;color:#1e293b}
+.light .bg-glow{background:radial-gradient(ellipse at top right,rgba(168,85,247,0.06),transparent 60%),radial-gradient(ellipse at bottom left,rgba(236,72,153,0.04),transparent 60%)}
+.light .task-card:hover,.light .file-card:hover{box-shadow:0 4px 20px rgba(0,0,0,0.06)}
+.light .btn-icon:hover{background:rgba(139,92,246,0.1);color:#7c3aed}
 .task-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;transition:all .25s;animation:fadeIn .35s ease-out}
 .task-card:hover{border-color:rgba(168,85,247,0.2);box-shadow:0 4px 20px rgba(0,0,0,0.15)}
 .file-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 18px;transition:all .2s;animation:fadeIn .3s ease-out}
@@ -50,8 +54,8 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
 .theme-btn:active{transform:scale(.9)}
 .play-btn{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.2);cursor:pointer;transition:all .25s;flex-shrink:0}
 .play-btn:hover{background:rgba(168,85,247,0.25);border-color:#a78bfa;transform:scale(1.08)}
-.mascot{position:fixed;bottom:24px;right:24px;z-index:40;animation:float 3s ease-in-out infinite;cursor:pointer;opacity:.7;transition:opacity .3s}
-.mascot:hover{opacity:1}
+.input-icon-btn{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;transition:all .2s;cursor:pointer;color:var(--text-muted);background:transparent;border:none}
+.input-icon-btn:hover{background:rgba(168,85,247,0.12);color:var(--accent)}
 .modal-overlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px}
 .modal-content{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);max-width:900px;width:100%;animation:fadeIn .3s ease-out}
 .truncate-line{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -98,9 +102,19 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
     <!-- ===== DOWNLOAD BAR ===== -->
     <section class="glass rounded-2xl overflow-hidden input-bar transition-colors">
       <div class="flex flex-col sm:flex-row">
-        <input v-model="urlInput" @keydown.enter="startDownload" type="text"
-          placeholder="粘贴视频链接或分享文案... 抖音、B站、YouTube、小红书..."
-          class="flex-1 min-w-0">
+        <div class="flex-1 min-w-0 relative flex items-center">
+          <input v-model="urlInput" @keydown.enter="startDownload" type="text"
+            placeholder="粘贴视频链接或分享文案... 抖音、B站、YouTube、小红书..."
+            class="w-full h-full" :style="{height:'48px',padding:'0 80px 0 16px',background:'transparent',border:'none',outline:'none',color:'var(--text)',fontSize:'14px'}">
+          <div class="absolute right-1.5 flex gap-0.5">
+            <button @click="pasteUrl" type="button" class="input-icon-btn" title="从剪贴板粘贴">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+            </button>
+            <button v-show="urlInput" @click="urlInput=''" type="button" class="input-icon-btn" title="清除">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
         <select v-model="platformInput" class="shrink-0" :style="{borderColor:'var(--border)'}">
           <option value="">🔍 自动检测</option>
           <option v-for="p in platforms" :key="p.value" :value="p.value">{{ p.label }}</option>
@@ -196,20 +210,7 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
     </section>
   </main>
 
-  <!-- ===== MASCOT ===== -->
-  <div class="mascot" title="🎀 videodl WebUI">
-    <svg width="48" height="48" viewBox="0 0 48 48">
-      <circle cx="24" cy="28" r="18" fill="url(#mGrad)" opacity=".8"/>
-      <circle cx="24" cy="28" r="18" fill="none" stroke="#a78bfa" stroke-width="1" opacity=".3"/>
-      <circle cx="18" cy="25" r="2" fill="#1e1b4b"/>
-      <circle cx="30" cy="25" r="2" fill="#1e1b4b"/>
-      <circle cx="18" cy="25" r="1" fill="#fff" opacity=".6"/>
-      <circle cx="30" cy="25" r="1" fill="#fff" opacity=".6"/>
-      <path d="M18 33c2 3 10 3 12 0" stroke="#ec4899" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M24 10l-2 4h4l-2 4" stroke="#fbbf24" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <defs><linearGradient id="mGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs>
-    </svg>
-  </div>
+  <!-- site-pet mascot (walks around the page) -->
 
   <!-- ===== VIDEO PLAYER MODAL ===== -->
   <div v-if="playerVisible" class="modal-overlay" @click.self="closePlayer">
@@ -268,6 +269,14 @@ createApp({
       };
       ws.onclose=()=>{wsConnected.value=false;setTimeout(connectWS,3000)};
       ws.onerror=()=>ws.close();
+    }
+
+    // ── Paste ──
+    async function pasteUrl(){
+      try{
+        const t=await navigator.clipboard.readText();
+        urlInput.value=t;
+      }catch(e){alert('无法读取剪贴板: '+e.message)}
     }
 
     // ── Download ──
@@ -359,6 +368,10 @@ createApp({
       connectWS();loadPlatforms();loadHistory();loadFiles();
       fileTimer=setInterval(loadFiles,8000);
       document.addEventListener('keydown',onEsc);
+      // Init site-pet mascot
+      if(typeof createSitePet==='function'){
+        setTimeout(()=>{try{createSitePet('example')}catch(e){}},500)
+      }
     });
     onUnmounted(()=>{
       if(fileTimer)clearInterval(fileTimer);
@@ -368,7 +381,7 @@ createApp({
     return{
       isDark,wsConnected,urlInput,platformInput,downloading,tasks,files,outputDir,platforms,
       playerVisible,playerTitle,playerNarrow,playerSquare,playerVideoRef,sakuraPetals,
-      startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo
+      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo
     };
   }
 }).mount('#app');
