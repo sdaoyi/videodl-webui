@@ -16,7 +16,7 @@ tailwind.config={darkMode:'class',theme:{extend:{colors:{sakura:{400:'#f472b6',5
 *{font-family:'Inter',system-ui,sans-serif;scrollbar-width:thin}
 :root{--bg:#1a1b2e;--surface:#242640;--border:#36385c;--text:#e4e6f5;--text-muted:#9ca0cc;--accent:#a78bfa;--pink:#f472b6}
 .light{--bg:#f5f5ff;--surface:#ffffff;--border:#e2e4f0;--text:#1a1b3a;--text-muted:#6b6f99;--accent:#7c3aed;--pink:#db2777}
-body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;min-height:100vh}
+body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;min-height:100vh;min-height:100dvh}
 .glass{background:rgba(36,38,64,0.85);border:1px solid var(--border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .light .glass{background:rgba(255,255,255,0.8)}
 .glass-hover:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.1)}
@@ -64,6 +64,42 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
 .gallery-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:5;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);color:#fff;border:none;cursor:pointer;transition:all .2s}
 .gallery-nav:hover{background:rgba(168,85,247,0.6)}
 .empty-svg{width:180px;height:140px;margin:0 auto}
+
+/* ── 移动端适配 ── */
+@media (max-width:640px){
+  body{font-size:15px}
+  header{backdrop-filter:none}
+  header .h-16{height:52px}
+  header .text-lg{font-size:15px}
+  header .text-xs{font-size:10px}
+  header .rounded-xl{width:32px;height:32px;font-size:14px}
+  header .gap-4{gap:10px}
+  main{max-width:100%;padding:12px 10px;gap:20px}
+  main section > .mb-4{margin-bottom:10px}
+  main h2.text-xs{font-size:10px}
+  .input-bar .flex-col > * {border-radius:0}
+  .input-bar input{padding:0 60px 0 12px;font-size:14px}
+  .input-bar select{border-left:none;border-top:1px solid var(--border);font-size:13px}
+  .btn-primary{height:44px;border-radius:0 0 16px 16px;font-size:14px}
+  .task-card{padding:12px;border-radius:12px}
+  .task-card .text-sm{font-size:13px}
+  .task-card .text-xs{font-size:11px}
+  .task-card .max-w-\[60\%\]{max-width:100%}
+  .file-card{padding:10px 14px;border-radius:10px}
+  .file-card .text-sm{font-size:13px}
+  .file-card .text-xs{font-size:11px}
+  .file-group .text-sm{font-size:13px}
+  .file-group .px-4{padding-left:10px;padding-right:10px}
+  .play-btn{width:34px;height:34px}
+  .btn-icon{width:32px;height:32px;border-radius:8px}
+  .modal-overlay{padding:8px}
+  .modal-content{border-radius:14px}
+  .modal-content .px-5{padding-left:12px;padding-right:12px}
+  .max-w-\[300px\]{max-width:180px}
+  .empty-svg{width:140px;height:110px}
+  /* 安全区域 */
+  .mascot{bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+}
 </style>
 </head>
 <body class="bg-glow">
