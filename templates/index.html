@@ -191,37 +191,83 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
       <div v-if="files.length === 0" class="py-12 text-center">
         <p class="text-sm" :style="{color:'var(--text-muted)'}">暂无文件</p>
       </div>
-      <div v-else class="space-y-2" style="max-height:50vh;overflow-y:auto;scrollbar-width:thin">
-        <div v-for="f in files" :key="f.rel_path" class="file-card">
-          <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 min-w-0 flex-1">
-              <span>{{ isImage(f.name) ? '🖼️' : isVideo(f.name) ? '🎬' : '📄' }}</span>
-              <div class="min-w-0 flex-1">
-                <p class="text-sm truncate" :title="f.name">{{ f.name }}</p>
-                <p class="text-xs" :style="{color:'var(--text-muted)'}">{{ f.size_str }}</p>
+      <div v-else class="space-y-3" style="max-height:50vh;overflow-y:auto;scrollbar-width:thin">
+        <!-- 分组后的文件列表 -->
+        <template v-for="g in groupedFiles" :key="g.key">
+          <!-- 单文件直接展示 -->
+          <div v-if="!g.isGroup" :class="['file-card', 'single-file']">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <span>{{ isImage(g.name) ? '🖼️' : isVideo(g.name) ? '🎬' : '📄' }}</span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm truncate" :title="g.name">{{ g.name }}</p>
+                  <p class="text-xs" :style="{color:'var(--text-muted)'}">{{ g.size_str }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button v-if="isVideo(g.name)" @click="playVideo(g.video_url, g.name)" class="play-btn" title="播放">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#a78bfa"><polygon points="8 5 19 12 8 19 8 5"/></svg>
+                </button>
+                <button v-if="isImage(g.name)" @click="viewImage(g.video_url, g.name)" class="btn-icon" title="查看图片">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </button>
+                <button @click="deleteFile(g.rel_path, g.name)" class="btn-icon" title="删除文件">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
               </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <button v-if="isVideo(f.name)" @click="playVideo(f.video_url, f.name)" class="play-btn" title="播放">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#a78bfa"><polygon points="8 5 19 12 8 19 8 5"/></svg>
-              </button>
-              <button v-if="isImage(f.name)" @click="openFile(f.video_url)" class="btn-icon" title="查看图片">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              </button>
-              <button v-if="!isImage(f.name) && !isVideo(f.name) && f.video_url" @click="openFile(f.video_url)" class="btn-icon" title="打开文件">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-              </button>
-              <button @click="deleteFile(f.rel_path, f.name)" class="btn-icon" title="删除文件">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
+          </div>
+          <!-- 图片组：展开/折叠 -->
+          <div v-else class="file-group glass rounded-xl overflow-hidden transition-colors">
+            <div @click="toggleGroup(g.key)" class="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-white/5 transition">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="text-lg">🖼️</span>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium truncate">{{ g.name }}</p>
+                  <p class="text-xs" :style="{color:'var(--text-muted)'}">{{ g.children.length }} 张图片 · {{ g.totalSize }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button @click.stop="deleteGroup(g.key)" class="btn-icon" title="删除整组" style="width:28px;height:28px">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" :style="{transform: g.expanded ? 'rotate(180deg)' : '', transition: 'transform .2s'}">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+            </div>
+            <div v-if="g.expanded" class="border-t divide-y" :style="{borderColor:'var(--border)',borderTop:'1px solid var(--border)'}">
+              <div v-for="f in g.children" :key="f.rel_path" class="flex items-center justify-between px-4 py-2.5 hover:bg-white/3 transition">
+                <span class="text-xs font-mono opacity-50" style="width:28px">{{ f.name.split('_')[0] }}</span>
+                <span class="text-sm flex-1 ml-2 truncate" :title="f.name">{{ f.name }}</span>
+                <span class="text-xs ml-2" :style="{color:'var(--text-muted)'}">{{ f.size_str }}</span>
+                <button @click="viewImage(f.video_url, f.name)" class="btn-icon ml-2" title="查看" style="width:28px;height:28px">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
       </div>
     </section>
   </main>
 
   <!-- webmeji mascot (初音未来在页面散步) -->
+
+  <!-- ===== IMAGE VIEWER MODAL ===== -->
+  <div v-if="imageVisible" class="modal-overlay" @click.self="closeImage">
+    <div class="modal-content" style="max-width:900px">
+      <div class="flex items-center justify-between px-5 py-3.5 border-b" :style="{borderColor:'var(--border)'}">
+        <h3 class="text-sm font-medium truncate max-w-md">{{ imageTitle }}</h3>
+        <button @click="closeImage" class="btn-icon" title="关闭">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="flex justify-center p-4" style="background:#000">
+        <img :src="imageSrc" style="max-height:70vh;max-width:100%;object-fit:contain" alt="preview">
+      </div>
+    </div>
+  </div>
 
   <!-- ===== VIDEO PLAYER MODAL ===== -->
   <div v-if="playerVisible" class="modal-overlay" @click.self="closePlayer">
@@ -259,6 +305,10 @@ createApp({
     const playerNarrow=ref(false);
     const playerSquare=ref(false);
     const playerVideoRef=ref(null);
+    const imageVisible=ref(false);
+    const imageTitle=ref('');
+    const imageSrc=ref('');
+    const groupExpanded=ref({});
 
     // Sakura petals
     const sakuraPetals=ref(Array.from({length:8},(_,i)=>({
@@ -269,6 +319,50 @@ createApp({
 
     // ── Computed ──
     const recentTasks=computed(()=>tasks.value.slice(0,3));
+
+    const groupedFiles=computed(()=>{
+      const groups={}, singles=[];
+      for(const f of files.value){
+        const parts=f.rel_path.split('/');
+        if(parts.length>1){
+          const key=parts[0];
+          if(!groups[key]) groups[key]={key,name:key,children:[],totalSize:0,isGroup:true,expanded:!!groupExpanded.value[key]};
+          groups[key].children.push(f);
+          groups[key].totalSize+=f.size;
+        }else{
+          singles.push({...f, isGroup:false, key:f.rel_path});
+        }
+      }
+      const result=[...singles];
+      for(const k in groups){
+        const g=groups[k];
+        g.totalSize=_fmtSize(g.totalSize);
+        g.expanded=!!groupExpanded.value[k];
+        result.push(g);
+      }
+      return result;
+    });
+
+    function toggleGroup(key){
+      groupExpanded.value={...groupExpanded.value, [key]:!groupExpanded.value[key]};
+    }
+
+    async function deleteGroup(key){
+      const g=groupedFiles.value.find(x=>x.key===key);
+      if(!g||!g.children)return;
+      if(!confirm(`确定删除「${key}」整组（${g.children.length} 个文件）？`))return;
+      for(const f of g.children){
+        try{
+          await fetch('/api/files',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:f.rel_path})});
+        }catch(e){}
+      }
+      await loadFiles();
+    }
+
+    function _fmtSize(n){
+      for(const u of ['B','KB','MB','GB']){if(n<1024)return n.toFixed(1)+' '+u; n/=1024}
+      return n.toFixed(1)+' TB';
+    }
 
     // ── WebSocket ──
     function connectWS(){
@@ -349,7 +443,20 @@ createApp({
       playerVisible.value=false;
       document.body.style.overflow='';
     }
-    function onEsc(e){if(e.key==='Escape')closePlayer()}
+    function onEsc(e){if(e.key==='Escape'){closePlayer();closeImage()}}
+
+    // ── Image Viewer ──
+    function viewImage(url,title){
+      imageTitle.value=decodeURIComponent(title||'');
+      imageSrc.value=url;
+      imageVisible.value=true;
+      document.body.style.overflow='hidden';
+    }
+    function closeImage(){
+      imageVisible.value=false;
+      imageSrc.value='';
+      if(!playerVisible.value) document.body.style.overflow='';
+    }
 
     // ── Theme ──
     function toggleTheme(){
@@ -395,7 +502,7 @@ createApp({
     return{
       isDark,wsConnected,urlInput,platformInput,downloading,tasks,files,outputDir,platforms,
       playerVisible,playerTitle,playerNarrow,playerSquare,playerVideoRef,sakuraPetals,
-      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo,isVideo,isImage,recentTasks,removeTask
+      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo,isVideo,isImage,recentTasks,removeTask,groupedFiles,toggleGroup,deleteGroup,viewImage,closeImage,imageVisible,imageTitle,imageSrc
     };
   }
 }).mount('#app');
