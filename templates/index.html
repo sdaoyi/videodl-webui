@@ -14,10 +14,11 @@ tailwind.config={darkMode:'class',theme:{extend:{colors:{sakura:{400:'#f472b6',5
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *{font-family:'Inter',system-ui,sans-serif;scrollbar-width:thin}
-:root{--bg:#1e1e30;--surface:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.1);--text:#f0f4ff;--text-muted:#bcc3d4;--accent:#c4b5fd;--pink:#f9a8d4}
-.light{--bg:#f8fafc;--surface:rgba(255,255,255,0.8);--border:rgba(0,0,0,0.08);--text:#0f172a;--text-muted:#64748b;--accent:#7c3aed;--pink:#db2777}
+:root{--bg:#1a1b2e;--surface:#242640;--border:#36385c;--text:#e4e6f5;--text-muted:#9ca0cc;--accent:#a78bfa;--pink:#f472b6}
+.light{--bg:#f5f5ff;--surface:#ffffff;--border:#e2e4f0;--text:#1a1b3a;--text-muted:#6b6f99;--accent:#7c3aed;--pink:#db2777}
 body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;min-height:100vh}
-.glass{background:var(--surface);border:1px solid var(--border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.glass{background:rgba(36,38,64,0.85);border:1px solid var(--border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.light .glass{background:rgba(255,255,255,0.8)}
 .glass-hover:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.1)}
 .bg-glow{background:radial-gradient(ellipse at top right,rgba(168,85,247,0.15),transparent 60%),radial-gradient(ellipse at bottom left,rgba(236,72,153,0.1),transparent 60%)}
 .btn-primary{background:linear-gradient(135deg,#a78bfa,#ec4899);box-shadow:0 0 24px rgba(236,72,153,0.25);transition:all .25s}
