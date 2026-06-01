@@ -44,6 +44,9 @@ log = logging.getLogger("videodl-webui")
 
 app = FastAPI(title="videodl WebUI")
 
+# 挂载静态文件（webmeji 精灵 sprite 等）
+app.mount("/static", StaticFiles(directory=str(_BASE_DIR / "static")), name="static")
+
 # ── 全局状态 ──────────────────────────────────────────
 downloads: list[dict] = []
 download_lock = threading.Lock()
