@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  videodl:
+    build: .
+    container_name: videodl-webui
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./videodl_outputs:/app/videodl_outputs
+      - ./logs:/app/logs
+    environment:
+      - TZ=Asia/Shanghai

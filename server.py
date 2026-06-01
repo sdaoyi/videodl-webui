@@ -292,6 +292,29 @@ async def api_files():
     return {"files": files, "output_dir": str(OUTPUT_DIR)}
 
 
+@app.delete("/api/files")
+async def api_delete_file(data: dict):
+    """删除已下载的文件"""
+    rel_path = data.get("path", "").strip()
+    if not rel_path:
+        return {"ok": False, "error": "未指定文件路径"}
+    full_path = OUTPUT_DIR / rel_path
+    # 安全检查：防止路径穿越
+    try:
+        full_path.resolve().relative_to(OUTPUT_DIR.resolve())
+    except ValueError:
+        return {"ok": False, "error": "非法的文件路径"}
+    if not full_path.exists() or not full_path.is_file():
+        return {"ok": False, "error": "文件不存在"}
+    try:
+        os.remove(full_path)
+        log.info(f"deleted file: {full_path}")
+        return {"ok": True}
+    except Exception as e:
+        log.error(f"delete failed: {full_path} — {e}")
+        return {"ok": False, "error": str(e)}
+
+
 @app.get("/api/platforms")
 async def api_platforms():
     return {"platforms": [{"value": v, "label": l} for v, l in KNOWN_PLATFORMS]}
