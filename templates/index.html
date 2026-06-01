@@ -256,15 +256,15 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
 
   <!-- ===== IMAGE VIEWER MODAL ===== -->
   <div v-if="imageVisible" class="modal-overlay" @click.self="closeImage">
-    <div class="modal-content" style="max-width:900px">
+    <div class="modal-content" style="max-width:600px">
       <div class="flex items-center justify-between px-5 py-3.5 border-b" :style="{borderColor:'var(--border)'}">
         <h3 class="text-sm font-medium truncate max-w-md">{{ imageTitle }}</h3>
         <button @click="closeImage" class="btn-icon" title="关闭">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div class="flex justify-center p-4" style="background:#000">
-        <img :src="imageSrc" style="max-height:70vh;max-width:100%;object-fit:contain" alt="preview">
+      <div class="flex justify-center" style="background:#000;padding:16px">
+        <img :src="imageSrc" style="max-height:55vh;max-width:100%;object-fit:contain;border-radius:6px" alt="preview">
       </div>
     </div>
   </div>
