@@ -18,92 +18,54 @@
 | 🐳 Docker | 一键部署，docker compose up -d |
 | 📱 移动端 | 手机浏览器访问适配，触控 + 滑动手势 |
 
-## 🚀 快速开始
-
-### 本地运行
+## 🚀 部署（服务器）
 
 ```bash
-# 安装依赖（videodl 需从 GitHub 安装）
+# 1. 克隆项目
+git clone https://github.com/liangyu-love/videodl-webui.git
+cd videodl-webui
+
+# 2. 启动
+docker compose up -d --build
+```
+
+打开 **http://你的服务器IP:9999**
+
+> 需要安装 [Docker](https://docs.docker.com/engine/install/) 和 Docker Compose
+
+### 本地运行（开发）
+
+```bash
 pip install fastapi uvicorn
 pip install git+https://github.com/CharlesPikachu/videodl.git
-
-# 启动
 python server.py
 ```
 
 打开 http://localhost:9999
 
-### Docker 部署
-
-```bash
-docker compose up -d
-```
-
 ## ⚙️ 配置
 
 ### 修改端口
 
-`server.py` 最底部：
+`docker-compose.yml` 里改端口映射：
 
-```python
-uvicorn.run(app, host="0.0.0.0", port=9999)  # 改这里
-```
-
-或者在启动时指定：
-
-```bash
-uvicorn server:app --host 0.0.0.0 --port 9000
+```yaml
+ports:
+  - "8080:9999"   # 把 8080 换成你想要的公网端口
 ```
 
 ### 环境变量
 
+在 `docker-compose.yml` 的 `environment` 下添加：
+
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `VIDEODL_OUTPUT` | `./videodl_outputs` | 下载文件输出目录 |
+| `VIDEODL_OUTPUT` | `/app/videodl_outputs` | 下载文件输出目录 |
+| `TZ` | `Asia/Shanghai` | 时区 |
 
-### 反向代理（Nginx）
+### 下载文件位置
 
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:9999;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";  # WebSocket 必须
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-```
-
-⚠️ WebSocket 需要 `Upgrade` + `Connection` 头，否则下载进度不推送。
-
-### systemd 服务（Linux 服务器）
-
-```ini
-# /etc/systemd/system/videodl-webui.service
-[Unit]
-Description=videodl WebUI
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/opt/videodl-webui
-ExecStart=/opt/videodl-webui/venv/bin/python server.py
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now videodl-webui
-```
+默认保存在项目目录下的 `videodl_outputs/`，通过 Docker volume 持久化。
 
 ## 📦 支持的平台
 
