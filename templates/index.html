@@ -150,7 +150,7 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
         <p class="mt-3 text-sm" :style="{color:'var(--text-muted)'}">粘贴链接开始下载 ✨</p>
       </div>
       <div v-else class="space-y-3">
-        <div v-for="t in tasks" :key="t.id" class="task-card">
+        <div v-for="t in recentTasks" :key="t.id" class="task-card">
           <div class="flex items-start gap-3">
             <span class="status-dot" :class="t.status"></span>
             <div class="flex-1 min-w-0">
@@ -170,6 +170,9 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
               </details>
             </div>
             <span class="text-xs shrink-0" :style="{color:'var(--text-muted)'}">{{ timeAgo(t.updated_at) }}</span>
+            <button @click.stop="removeTask(t.id)" class="btn-icon" title="删除记录" style="margin-left:6px">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -263,6 +266,9 @@ createApp({
     })));
 
     let ws=null,fileTimer=null;
+
+    // ── Computed ──
+    const recentTasks=computed(()=>tasks.value.slice(0,3));
 
     // ── WebSocket ──
     function connectWS(){
@@ -368,6 +374,7 @@ createApp({
     }
 
     // ── Helpers ──
+    function removeTask(id){tasks.value=tasks.value.filter(t=>t.id!==id)}
     function statusIcon(s){return {queued:'⏳',parsing:'🔍',downloading:'📥',completed:'✅',failed:'❌'}[s]||'⏳'}
     function timeAgo(ts){if(!ts)return '';const s=Math.floor(Date.now()/1000-ts);if(s<60)return '刚刚';if(s<3600)return Math.floor(s/60)+' 分钟前';return Math.floor(s/3600)+' 小时前'}
     function isVideo(n){return /\.(mp4|webm|mkv|mov|avi|flv|ts)$/i.test(n||'')}
@@ -388,7 +395,7 @@ createApp({
     return{
       isDark,wsConnected,urlInput,platformInput,downloading,tasks,files,outputDir,platforms,
       playerVisible,playerTitle,playerNarrow,playerSquare,playerVideoRef,sakuraPetals,
-      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo,isVideo,isImage
+      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo,isVideo,isImage,recentTasks,removeTask
     };
   }
 }).mount('#app');
