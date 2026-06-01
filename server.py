@@ -104,6 +104,72 @@ def _write_log(task_id: str, text: str):
     return str(log_path)
 
 
+# ── 图片下载工具 ──────────────────────────────────────
+import urllib.request
+import re as _re
+import hashlib
+
+def _extract_image_urls(info) -> list[str] | None:
+    """从解析结果中提取图集 URL 列表（抖音图文等），失败返回 None"""
+    try:
+        raw = info.raw_data.get("loaderData", {})
+        for key in raw:
+            if "page" in key or "video" in key:
+                page = raw[key]
+                if isinstance(page, dict):
+                    item_list = page.get("videoInfoRes", {}).get("item_list", [])
+                    if item_list:
+                        item = item_list[0]
+                        images = item.get("images")
+                        if images and isinstance(images, list) and len(images) > 0:
+                            urls = []
+                            for img in images:
+                                url_list = img.get("url_list", [])
+                                if url_list:
+                                    # 选质量最高的（通常最后一个）
+                                    u = url_list[-1]
+                                    # 移除 watermask 相关参数获得原图
+                                    u = _re.sub(r'~tplv-dy-[^?]+', '', u)
+                                    urls.append(u)
+                            if urls:
+                                return urls
+    except Exception:
+        pass
+    return None
+
+
+def _download_images(title: str, urls: list[str], info) -> list[str]:
+    """下载图片到以标题命名的子目录，返回保存路径列表"""
+    import uuid, http.cookiejar
+    safe_title = _re.sub(r'[\\/*?:"<>|#\s]', '_', title)[:80]
+    save_dir = OUTPUT_DIR / safe_title
+    save_dir.mkdir(parents=True, exist_ok=True)
+    cj = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    saved = []
+    for i, url in enumerate(urls):
+        try:
+            ext = ".webp"
+            fname = f"{i+1:02d}_{uuid.uuid4().hex[:6]}{ext}"
+            fpath = save_dir / fname
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "Referer": "https://www.douyin.com/",
+                    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1",
+                    "Accept": "image/webp,image/*,*/*",
+                },
+            )
+            with opener.open(req) as resp:
+                fpath.write_bytes(resp.read())
+            if fpath.exists() and fpath.stat().st_size > 0:
+                saved.append(str(fpath))
+                log.info(f"downloaded image {i+1}/{len(urls)}: {fpath}")
+        except Exception as e:
+            log.error(f"image {i+1}/{len(urls)} failed: {e}")
+    return saved
+
+
 # ── 后台下载任务 ──────────────────────────────────────
 def _run_download(task_id: str, url: str, platform: str | None):
     global downloads
@@ -164,8 +230,31 @@ def _run_download(task_id: str, url: str, platform: str | None):
                 return
 
             info = video_infos[0]
-            _status("downloading", f"正在下载: {info.title or url}",
-                    title=info.title or url,
+            title = (info.title or url).strip()
+
+            # ── 检查是否为图集（抖音图文 / 图片帖子）──
+            image_urls = _extract_image_urls(info)
+            if image_urls:
+                _status("downloading", f"正在下载 {len(image_urls)} 张图片: {title}",
+                        title=title, source=info.source or "unknown", ext="jpg",
+                        image_count=len(image_urls))
+                saved = _download_images(title, image_urls, info)
+                log_text += capture.getvalue()
+                if saved:
+                    _status("completed", f"已下载 {len(saved)} 张图片",
+                            save_path=str(saved[0]), size=os.path.getsize(saved[0]),
+                            size_str=f"{len(saved)} 张",
+                            images=[str(p) for p in saved])
+                    log.info(f"[{task_id}] images completed: {len(saved)} pics")
+                else:
+                    _status("failed", "图片下载失败")
+                if log_text.strip():
+                    _write_log(task_id, log_text)
+                return
+
+            # ── 普通视频下载 ──
+            _status("downloading", f"正在下载: {title}",
+                    title=title,
                     source=info.source or "unknown",
                     ext=info.ext or "mp4")
 
