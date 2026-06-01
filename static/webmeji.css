@@ -1,11 +1,16 @@
 /* webmeji */
 .webmeji-container {
   position: fixed;
-  bottom: 0;
-  width: 100px;
-  height: 100px;
+  bottom: 20px;
+  width: 120px;
+  height: 120px;
   overflow: hidden;
   z-index: 9999;
+  filter: drop-shadow(0 4px 12px rgba(168,85,247,0.3));
+  transition: filter 0.3s;
+}
+.webmeji-container:hover {
+  filter: drop-shadow(0 4px 20px rgba(236,72,153,0.5));
 }
 
 .webmeji-container img {
@@ -15,12 +20,13 @@
   pointer-events: none;
   display: block;
   transform-origin: center;
+  image-rendering: auto;
 }
 
 @media (max-width: 768px) {
   .webmeji-container {
-    width: 50px;
-    height: 50px;
+    width: 80px;
+    height: 80px;
   }
 }
 
