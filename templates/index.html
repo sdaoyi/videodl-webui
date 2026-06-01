@@ -274,7 +274,7 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div class="flex justify-center items-center" style="background:#000;position:relative">
+      <div class="flex justify-center items-center" style="background:#000;position:relative" @wheel.passive="onWheel" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
         <button v-if="galleryIdx>0" @click="prevInGallery" class="gallery-nav" style="left:8px" title="上一张">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
@@ -295,7 +295,7 @@ body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div class="flex justify-center items-center bg-black" style="position:relative">
+      <div class="flex justify-center items-center bg-black" style="position:relative" @wheel="onWheel" @touchstart="onTouchStart" @touchend="onTouchEnd">
         <button v-if="galleryIdx>0" @click="prevInGallery" class="gallery-nav" style="left:8px" title="上一个视频">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
@@ -505,6 +505,24 @@ createApp({
       }
     }
 
+    // ── Wheel & Touch ──
+    let wheelTime=0, touchStartX=0, touchStartY=0;
+    function onWheel(e){
+      if(!imageVisible.value && !playerVisible.value) return;
+      const now=Date.now(); if(now-wheelTime<400) return; wheelTime=now;
+      if(e.deltaY>30) nextInGallery();
+      else if(e.deltaY<-30) prevInGallery();
+    }
+    function onTouchStart(e){ touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; }
+    function onTouchEnd(e){
+      const dx=e.changedTouches[0].clientX-touchStartX;
+      const dy=e.changedTouches[0].clientY-touchStartY;
+      if(Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>50){
+        if(dx<-30) nextInGallery();
+        else if(dx>30) prevInGallery();
+      }
+    }
+
     // ── Image Viewer ──
     function viewImage(url,title,group=null,idx=-1){
       imageTitle.value=decodeURIComponent(title||'');
@@ -555,6 +573,7 @@ createApp({
       connectWS();loadPlatforms();loadHistory();loadFiles();
       fileTimer=setInterval(loadFiles,8000);
       document.addEventListener('keydown',onEsc);
+      document.addEventListener('wheel',onWheel,{passive:true});
       // webmeji auto-initializes when DOM is ready
     });
     onUnmounted(()=>{
@@ -565,7 +584,7 @@ createApp({
     return{
       isDark,wsConnected,urlInput,platformInput,downloading,tasks,files,outputDir,platforms,
       playerVisible,playerTitle,playerNarrow,playerSquare,playerVideoRef,sakuraPetals,
-      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo,isVideo,isImage,recentTasks,removeTask,groupedFiles,toggleGroup,deleteGroup,viewImage,closeImage,imageVisible,imageTitle,imageSrc,allVideos,allVideoIdx,prevInGallery,nextInGallery,galleryIdx,galleryItems
+      pasteUrl,startDownload,loadFiles,deleteFile,openFile,playVideo,closePlayer,toggleTheme,statusIcon,timeAgo,isVideo,isImage,recentTasks,removeTask,groupedFiles,toggleGroup,deleteGroup,viewImage,closeImage,imageVisible,imageTitle,imageSrc,allVideos,allVideoIdx,prevInGallery,nextInGallery,galleryIdx,galleryItems,onWheel,onTouchStart,onTouchEnd
     };
   }
 }).mount('#app');
