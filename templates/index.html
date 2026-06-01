@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>videodl WebUI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: {} }
+  }
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { font-family: 'Inter', system-ui, sans-serif; }
+
+  /* ── Light theme ── */
+  .light body { background: #f8fafc; color: #1e293b; }
+  .light .glass { background: rgb(255 255 255 / 0.8); border-color: rgb(0 0 0 / 0.08); backdrop-filter: blur(16px); }
+  .light .glass:hover { background: rgb(255 255 255 / 0.95); border-color: rgb(0 0 0 / 0.12); }
+  .light header { background: rgb(255 255 255 / 0.7); border-color: rgb(0 0 0 / 0.06); }
+  .light .text-zinc-500, .light .text-zinc-600, .light .text-zinc-700 { color: #64748b !important; }
+  .light .btn-glow { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+  .light input, .light select { color: #1e293b; }
+  .light input::placeholder { color: #94a3b8; }
+  .light .bg-zinc-900, .light .bg-gray-900, .light .bg-black\/40 { background: rgb(255 255 255 / 0.8) !important; }
+  .light .bg-black { background: #000 !important; }
+  .light pre { background: #f1f5f9 !important; color: #475569 !important; }
+  .light .border-white\/5, .light .border-white\/10 { border-color: rgb(0 0 0 / 0.06) !important; }
+  .light #player-modal > div:first-child { background: rgb(0 0 0 / 0.6) !important; }
+
+  /* ── Dark theme ── */
+  .dark body { background: #0a0a0f; color: #e4e4e7; }
+  .dark .glass { background: rgb(255 255 255 / 0.03); border: 1px solid rgb(255 255 255 / 0.06); backdrop-filter: blur(12px); }
+  .dark .glass:hover { background: rgb(255 255 255 / 0.05); border-color: rgb(255 255 255 / 0.1); }
+  .dark header { background: rgb(0 0 0 / 0.4); border-color: rgb(255 255 255 / 0.05); }
+
+  /* ── Shared ── */
+  .btn-glow { box-shadow: 0 0 20px rgb(99 102 241 / 0.3); transition: all 0.2s; }
+  .btn-glow:hover { box-shadow: 0 0 30px rgb(99 102 241 / 0.5); transform: translateY(-1px); }
+  .btn-glow:active { transform: scale(0.97); }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot-queued { background: #f59e0b; }
+  .dot-parsing { background: #3b82f6; animation: pulse 1s infinite; }
+  .dot-downloading { background: #3b82f6; animation: pulse 0.6s infinite; }
+  .dot-completed { background: #10b981; }
+  .dot-failed { background: #ef4444; }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.3s ease-out; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.1); border-radius: 3px; }
+  .light ::-webkit-scrollbar-thumb { background: rgb(0 0 0 / 0.1); }
+
+  input:focus, select:focus { box-shadow: 0 0 0 2px rgb(99 102 241 / 0.3); outline: none; }
+
+  /* ── Theme toggle ── */
+  .theme-toggle { transition: transform 0.4s ease; }
+  .theme-toggle:active { transform: scale(1.2) rotate(30deg); }
+</style>
+</head>
+<body class="min-h-screen transition-colors duration-300">
+
+<!-- gradient orbs (dark only) -->
+<div class="dark-only fixed inset-0 overflow-hidden pointer-events-none -z-10">
+  <div class="absolute -top-40 -right-40 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl"></div>
+  <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl"></div>
+</div>
+
+<!-- Header -->
+<header class="border-b backdrop-blur-xl sticky top-0 z-40 transition-colors duration-300">
+  <div class="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-lg shadow-lg shadow-indigo-500/20">🎬</div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight">videodl <span class="text-indigo-400">WebUI</span></h1>
+        <p class="text-xs opacity-50">支持 65+ 视频平台</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Theme toggle -->
+      <button id="theme-btn" onclick="toggleTheme()" class="theme-toggle w-9 h-9 rounded-xl glass flex items-center justify-center text-lg transition" title="切换主题">
+        <span id="theme-icon">🌙</span>
+      </button>
+      <!-- WS status -->
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs">
+        <span id="ws-dot" class="dot dot-failed"></span>
+        <span id="ws-text" class="opacity-60">离线</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-5 py-8 space-y-8">
+
+  <!-- Download Bar -->
+  <section class="glass rounded-2xl p-1 transition-colors duration-300">
+    <div class="flex flex-col sm:flex-row gap-1">
+      <input id="url-input" type="text" placeholder="粘贴视频链接或分享文案... 抖音、B站、YouTube 等" class="flex-1 bg-transparent px-5 py-3.5 text-sm placeholder:opacity-40 focus:outline-none" autofocus>
+      <select id="platform-select" class="bg-transparent border-l border-inherit px-4 py-3.5 text-sm opacity-60 focus:outline-none">
+        <option value="">🔍 自动检测</option>
+      </select>
+      <button id="download-btn" class="btn-glow px-7 py-3.5 rounded-2xl font-semibold text-sm text-white whitespace-nowrap">
+        ⬇ 下载
+      </button>
+    </div>
+  </section>
+
+  <!-- Tasks -->
+  <section>
+    <div class="flex items-center gap-3 mb-4">
+      <h2 class="text-xs font-semibold opacity-50 uppercase tracking-widest">下载任务</h2>
+      <div class="flex-1 h-px bg-current opacity-5"></div>
+    </div>
+    <div id="task-list" class="space-y-3">
+      <p class="opacity-40 text-sm py-12 text-center">暂无任务，粘贴链接开始下载</p>
+    </div>
+  </section>
+
+  <!-- Files -->
+  <section>
+    <div class="flex items-center gap-3 mb-4">
+      <h2 class="text-xs font-semibold opacity-50 uppercase tracking-widest">已下载文件</h2>
+      <span id="output-dir" class="text-xs opacity-30"></span>
+      <div class="flex-1 h-px bg-current opacity-5"></div>
+    </div>
+    <div id="file-list" class="space-y-2">
+      <p class="opacity-40 text-sm py-12 text-center">加载中...</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- Video Player Modal -->
+<div id="player-modal" class="fixed inset-0 z-50 hidden modal-enter" onclick="closePlayer()" style="background: rgb(0 0 0 / 0.85); backdrop-filter: blur(8px);">
+  <div class="flex items-center justify-center min-h-full p-6" onclick="event.stopPropagation()">
+    <div id="player-container" class="glass rounded-2xl overflow-hidden shadow-2xl shadow-black/50 transition-all duration-300" style="max-width: 900px; width: 100%;">
+      <div class="flex items-center justify-between px-5 py-3 border-b border-inherit">
+        <h3 id="player-title" class="text-sm font-medium truncate max-w-md">视频播放</h3>
+        <button onclick="closePlayer()" class="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center opacity-60 hover:opacity-100 transition text-lg">&times;</button>
+      </div>
+      <div class="flex justify-center bg-black">
+        <video id="player-video" class="w-full" controls autoplay style="max-height: 75vh;"></video>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Theme ──
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.classList.contains('dark');
+  if (isDark) { html.classList.remove('dark'); html.classList.add('light'); }
+  else { html.classList.remove('light'); html.classList.add('dark'); }
+  document.getElementById('theme-icon').textContent = html.classList.contains('dark') ? '🌙' : '☀️';
+  localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+  // show/hide dark-only orbs
+  document.querySelectorAll('.dark-only').forEach(el => el.style.display = html.classList.contains('dark') ? '' : 'none');
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme') || 'dark';
+  const html = document.documentElement;
+  html.classList.remove('dark', 'light');
+  html.classList.add(saved);
+  document.getElementById('theme-icon').textContent = saved === 'dark' ? '🌙' : '☀️';
+  if (saved === 'light') document.querySelectorAll('.dark-only').forEach(el => el.style.display = 'none');
+})();
+
+// ── State ──
+let ws = null, tasks = [];
+
+// ── WebSocket ──
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onopen = () => {
+    document.getElementById('ws-dot').className = 'dot dot-completed';
+    document.getElementById('ws-text').textContent = '已连接';
+  };
+  ws.onmessage = e => {
+    const d = JSON.parse(e.data);
+    const i = tasks.findIndex(t => t.id === d.id);
+    if (i >= 0) tasks[i] = { ...tasks[i], ...d };
+    else tasks.unshift(d);
+    renderTasks();
+  };
+  ws.onclose = () => { document.getElementById('ws-dot').className = 'dot dot-failed'; document.getElementById('ws-text').textContent = '重连中...'; setTimeout(connectWS, 3000); };
+  ws.onerror = () => ws.close();
+}
+
+// ── Render Tasks ──
+function renderTasks() {
+  const el = document.getElementById('task-list');
+  if (!tasks.length) { el.innerHTML = '<p class="opacity-40 text-sm py-12 text-center">暂无任务，粘贴链接开始下载</p>'; return; }
+  el.innerHTML = tasks.map(t => `
+    <div class="glass rounded-xl p-4 fade-in flex items-start gap-4 transition-colors duration-300">
+      <span class="dot dot-${t.status} mt-1.5"></span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-medium text-sm truncate">${esc(t.title || t.url)}</span>
+          ${t.source ? `<span class="text-xs bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/20">${esc(t.source)}</span>` : ''}
+          ${t.size_str ? `<span class="text-xs opacity-50">${t.size_str}</span>` : ''}
+        </div>
+        <p class="text-xs opacity-60 mt-1.5">${icon(t.status)} ${esc(t.message)}</p>
+        ${t.status === 'completed' ? `<p class="text-xs text-emerald-400 mt-1">💾 ${esc(t.save_path || '')}</p>` : ''}
+        ${t.status === 'failed' && t.log_preview ? `<details class="mt-2"><summary class="text-xs text-red-400 cursor-pointer hover:text-red-300">查看日志</summary><pre class="text-xs opacity-60 mt-1 max-h-32 overflow-y-auto bg-black/20 dark:bg-black/40 p-3 rounded-lg">${esc(t.log_preview)}</pre></details>` : ''}
+      </div>
+      <span class="text-xs opacity-30 shrink-0">${ago(t.updated_at)}</span>
+    </div>
+  `).join('');
+}
+
+function icon(s) { return { queued: '⏳', parsing: '🔍', downloading: '📥', completed: '✅', failed: '❌' }[s] || '⏳'; }
+function ago(ts) { if (!ts) return ''; const s = Math.floor(Date.now()/1000 - ts); if (s < 60) return '刚刚'; if (s < 3600) return Math.floor(s/60) + ' 分钟前'; return Math.floor(s/3600) + ' 小时前'; }
+
+// ── Download ──
+async function startDownload() {
+  const url = document.getElementById('url-input').value.trim();
+  const platform = document.getElementById('platform-select').value;
+  if (!url) return;
+  const btn = document.getElementById('download-btn');
+  btn.disabled = true; btn.textContent = '提交中...';
+  try {
+    const res = await fetch('/api/download', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, platform: platform || undefined }) });
+    const d = await res.json();
+    if (d.ok) { tasks.unshift(d.task); renderTasks(); document.getElementById('url-input').value = ''; }
+    else alert(d.error);
+  } catch (e) { alert('请求失败: ' + e.message); }
+  btn.disabled = false; btn.textContent = '⬇ 下载';
+}
+
+// ── File List ──
+async function loadFiles() {
+  try {
+    const res = await fetch('/api/files'); const data = await res.json();
+    const el = document.getElementById('file-list');
+    document.getElementById('output-dir').textContent = data.output_dir;
+    if (!data.files.length) { el.innerHTML = '<p class="opacity-40 text-sm py-8 text-center">暂无文件</p>'; return; }
+    el.innerHTML = data.files.map(f => {
+      const isVideo = /\.(mp4|webm|mkv|mov|avi|flv|ts)$/i.test(f.name);
+      return `
+      <div class="glass rounded-xl px-5 py-3 flex items-center justify-between text-sm fade-in transition-colors duration-300">
+        <span class="truncate flex items-center gap-3" title="${esc(f.path || f.name)}">
+          <span class="text-base">${isVideo ? '🎬' : '📄'}</span>
+          <span class="truncate">${esc(f.name)}</span>
+        </span>
+        <div class="flex items-center gap-4 shrink-0 ml-4">
+          ${isVideo ? `<button onclick="playVideo('${f.video_url}', '${esc(f.name).replace(/'/g, "\\'")}')" class="text-indigo-400 hover:text-indigo-300 text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition">▶ 播放</button>` : ''}
+          <span class="opacity-40 text-xs">${f.size_str}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) { document.getElementById('file-list').innerHTML = '<p class="text-red-400 text-sm py-8 text-center">加载失败</p>'; }
+}
+
+// ── Platforms ──
+async function loadPlatforms() {
+  try {
+    const res = await fetch('/api/platforms'); const data = await res.json();
+    document.getElementById('platform-select').innerHTML = data.platforms.map(p => `<option value="${esc(p.value)}">${esc(p.label)}</option>`).join('');
+  } catch (e) {}
+}
+
+// ── Video Player (supports 9:16 portrait) ──
+let videoAspectCheckDone = false;
+function playVideo(url, title) {
+  const modal = document.getElementById('player-modal');
+  const video = document.getElementById('player-video');
+  const container = document.getElementById('player-container');
+  document.getElementById('player-title').textContent = decodeURIComponent(title || '');
+  video.src = url;
+  video.style.maxWidth = '';
+  container.style.maxWidth = '900px';
+
+  // Detect aspect ratio once video metadata loads
+  videoAspectCheckDone = false;
+  video.onloadedmetadata = () => {
+    if (videoAspectCheckDone) return;
+    videoAspectCheckDone = true;
+    const ratio = video.videoWidth / video.videoHeight;
+    if (ratio < 0.75) {
+      // Portrait / 9:16 → narrow player like a phone
+      container.style.maxWidth = '400px';
+      video.style.maxWidth = '400px';
+    } else if (ratio < 1.1) {
+      // Square-ish
+      container.style.maxWidth = '600px';
+    }
+    // landscape → default 900px
+  };
+
+  video.load();
+  video.play().catch(() => {});
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  document.addEventListener('keydown', onEsc);
+}
+
+function closePlayer() {
+  const modal = document.getElementById('player-modal');
+  const video = document.getElementById('player-video');
+  video.pause(); video.src = ''; video.onloadedmetadata = null;
+  modal.classList.add('hidden');
+  document.body.style.overflow = '';
+  document.removeEventListener('keydown', onEsc);
+}
+function onEsc(e) { if (e.key === 'Escape') closePlayer(); }
+
+// ── History ──
+async function loadHistory() {
+  try { const res = await fetch('/api/history'); const data = await res.json(); tasks = data.downloads || []; renderTasks(); } catch (e) {}
+}
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Init ──
+document.getElementById('download-btn').addEventListener('click', startDownload);
+document.getElementById('url-input').addEventListener('keydown', e => { if (e.key === 'Enter') startDownload(); });
+connectWS(); loadPlatforms(); loadHistory(); loadFiles();
+setInterval(loadFiles, 8000);
+</script>
+</body>
+</html>
