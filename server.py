@@ -124,12 +124,12 @@ def _extract_image_urls(info) -> list[str] | None:
                         if images and isinstance(images, list) and len(images) > 0:
                             urls = []
                             for img in images:
-                                # 优先用 download_url_list（无水印高清版）
-                                dl = img.get("download_url_list", [])
+                                # 用 url_list 无水印版（download_url_list 带 water 有水印）
                                 ul = img.get("url_list", [])
+                                dl = img.get("download_url_list", [])
                                 u = None
-                                if dl: u = dl[0]
-                                elif ul: u = ul[0]
+                                if ul: u = ul[0]
+                                elif dl: u = dl[0]
                                 if u: urls.append(u)
                             if urls:
                                 return urls
