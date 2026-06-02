@@ -124,11 +124,13 @@ def _extract_image_urls(info) -> list[str] | None:
                         if images and isinstance(images, list) and len(images) > 0:
                             urls = []
                             for img in images:
-                                url_list = img.get("url_list", [])
-                                if url_list:
-                                    # 用第一个 URL（不同 CDN 域名，更稳定）
-                                    u = url_list[0]
-                                    urls.append(u)
+                                # 优先用 download_url_list（无水印高清版）
+                                dl = img.get("download_url_list", [])
+                                ul = img.get("url_list", [])
+                                u = None
+                                if dl: u = dl[0]
+                                elif ul: u = ul[0]
+                                if u: urls.append(u)
                             if urls:
                                 return urls
     except Exception:
