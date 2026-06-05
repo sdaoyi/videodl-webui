@@ -460,6 +460,35 @@ async def index():
         headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
     )
 
+@app.get("/tt")
+async def tt_index():
+    html_path = Path(__file__).parent / "templates" / "tt.html"
+    if html_path.exists():
+        return HTMLResponse(
+            html_path.read_text(encoding="utf-8"),
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+        )
+    return HTMLResponse("<h1>TT page not found</h1>", status_code=404)
+
+# TikTokDownloader API 代理（解决跨域）
+@app.post("/tt/api/proxy")
+async def tt_proxy(data: dict):
+    """转发请求到 TikTokDownloader API (port 5555)"""
+    import http.client
+    import json as _json
+    path = data.get("path", "")
+    method = data.get("method", "POST")
+    body = _json.dumps(data.get("body", {})).encode("utf-8")
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", 5555, timeout=15)
+        conn.request(method, path, body=body, headers={"Content-Type": "application/json"})
+        resp = conn.getresponse()
+        result = _json.loads(resp.read().decode("utf-8"))
+        conn.close()
+        return {"ok": True, "status": resp.status, "data": result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
 
 if __name__ == "__main__":
     import uvicorn

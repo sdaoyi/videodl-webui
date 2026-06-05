@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TikTokDownloader · TT</title>
+<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{font-family:'Inter',system-ui,sans-serif;scrollbar-width:thin}
+:root{--bg:#1a1b2e;--surface:#242640;--border:#36385c;--text:#e4e6f5;--text-muted:#9ca0cc;--accent:#a78bfa;--pink:#f472b6}
+body{background:var(--bg);color:var(--text);min-height:100vh;margin:0}
+.glass{background:rgba(36,38,64,0.85);border:1px solid var(--border);backdrop-filter:blur(16px)}
+.btn-primary{background:linear-gradient(135deg,#a78bfa,#ec4899);box-shadow:0 0 24px rgba(236,72,153,0.25);transition:all .25s;cursor:pointer}
+.btn-primary:hover{box-shadow:0 0 40px rgba(236,72,153,0.4);transform:translateY(-1px)}
+.btn-primary:active{transform:scale(.97)}
+.bg-glow{background:radial-gradient(ellipse at top right,rgba(168,85,247,0.15),transparent 60%),radial-gradient(ellipse at bottom left,rgba(236,72,153,0.1),transparent 60%)}
+.btn-icon{width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;transition:all .2s;cursor:pointer;background:var(--surface);border:1px solid var(--border);color:var(--text-muted)}
+.btn-icon:hover{background:rgba(168,85,247,0.15);color:var(--accent);border-color:rgba(168,85,247,0.3)}
+.badge{font-size:11px;padding:2px 10px;border-radius:20px;background:rgba(168,85,247,0.12);color:#a78bfa;border:1px solid rgba(168,85,247,0.2);font-weight:500}
+.badge-success{background:rgba(16,185,129,0.12);color:#10b981;border-color:rgba(16,185,129,0.2)}
+.badge-error{background:rgba(239,68,68,0.12);color:#ef4444;border-color:rgba(239,68,68,0.2)}
+</style>
+</head>
+<body class="bg-glow">
+<div id="app" class="max-w-2xl mx-auto px-5 py-8">
+  <!-- Header -->
+  <div class="flex items-center gap-4 mb-8">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-lg">📱</div>
+    <div>
+      <h1 class="text-lg font-bold">TikTokDownloader <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">WebUI</span></h1>
+      <p class="text-xs" style="color:var(--text-muted)">支持实况图 · 图集 · 视频 · 无水印</p>
+    </div>
+    <a href="/" class="btn-icon ml-auto" title="回到 videodl" style="text-decoration:none;padding:0 16px;width:auto;gap:6px;font-size:13px">🎬 videodl</a>
+  </div>
+
+  <!-- Input Bar -->
+  <div class="glass rounded-2xl overflow-hidden mb-6">
+    <div class="flex">
+      <div class="flex-1 relative flex items-center">
+        <input v-model="urlInput" @keydown.enter="start" type="text" placeholder="粘贴抖音/TikTok 链接..."
+          style="background:transparent;border:none;outline:none;color:var(--text);height:48px;padding:0 80px 0 16px;font-size:14px;width:100%">
+        <div class="absolute right-1.5 flex gap-0.5">
+          <button @click="pasteUrl" type="button" style="width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);background:transparent;border:none" title="粘贴">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+          </button>
+          <button v-show="urlInput" @click="urlInput=''" type="button" style="width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);background:transparent;border:none" title="清除">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+      <button @click="start" :disabled="loading" class="btn-primary px-8 font-semibold text-sm text-white whitespace-nowrap" style="min-width:100px;height:48px;border-radius:0 16px 16px 0">
+        {{ loading ? '解析中...' : '解析' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="flex items-center gap-3 mb-4">
+    <span class="w-1.5 h-1.5 rounded-full" :style="{background: apiOk ? '#10b981' : '#ef4444'}"></span>
+    <span class="text-xs" style="color:var(--text-muted)">{{ apiOk ? 'API 已连接 (5555)' : 'API 未连接 — 请先启动 TikTokDownloader 的 Web API 模式' }}</span>
+    <div class="flex-1 h-px" style="background:var(--border)"></div>
+  </div>
+
+  <!-- Result -->
+  <div v-if="result" class="glass rounded-2xl overflow-hidden">
+    <div class="px-5 py-4 border-b" style="border-color:var(--border)">
+      <div class="flex items-center gap-3">
+        <img v-if="result.cover" :src="result.cover" style="width:48px;height:48px;border-radius:8px;object-fit:cover">
+        <div class="min-w-0">
+          <p class="text-sm font-medium truncate">{{ result.desc || result.title || '无标题' }}</p>
+          <p class="text-xs mt-0.5" style="color:var(--text-muted)">
+            {{ result.author }} · {{ result.type }} · {{ result.create_time }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Images / Live Photos -->
+    <div v-if="result.images && result.images.length" class="p-4 space-y-3" style="max-height:60vh;overflow-y:auto">
+      <div v-for="(img, i) in result.images" :key="i" class="glass rounded-xl p-3 flex items-center gap-4">
+        <img :src="img.thumb || img.url" style="width:72px;height:72px;border-radius:8px;object-fit:cover" @click="viewImage(img.url, result.desc+'_'+(i+1))">
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-medium truncate">图 {{ i+1 }}{{ img.live ? ' · 实况' : '' }}</p>
+          <p class="text-xs mt-1" style="color:var(--text-muted)">{{ img.width }}x{{ img.height }}</p>
+        </div>
+        <div class="flex gap-2">
+          <a :href="img.url" download class="btn-icon" title="下载" style="text-decoration:none;width:32px;height:32px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </a>
+          <button v-if="img.live && img.live_url" @click="viewVideo(img.live_url, result.desc+'_'+(i+1))" class="btn-icon" title="播放实况" style="width:32px;height:32px;background:rgba(168,85,247,0.15);color:var(--accent)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="8 5 19 12 8 19 8 5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Video -->
+    <div v-if="result.video_url" class="p-4">
+      <video :src="result.video_url" class="w-full rounded-xl" controls style="max-height:50vh"></video>
+      <div class="flex gap-2 mt-3">
+        <a :href="result.video_url" download class="btn-icon px-4 text-xs" style="text-decoration:none;width:auto;height:32px;gap:4px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载视频
+        </a>
+        <a :href="result.music_url" v-if="result.music_url" download class="btn-icon px-4 text-xs" style="text-decoration:none;width:auto;height:32px;gap:4px">
+          🎵 下载音乐
+        </a>
+      </div>
+    </div>
+
+    <!-- Raw JSON -->
+    <details class="p-4 border-t" style="border-color:var(--border)">
+      <summary class="text-xs cursor-pointer" style="color:var(--text-muted)">查看原始数据</summary>
+      <pre class="text-xs mt-2 p-3 rounded-lg overflow-x-auto" style="background:rgba(0,0,0,0.3);color:var(--text-muted);max-height:40vh">{{ JSON.stringify(result.raw, null, 2) }}</pre>
+    </details>
+  </div>
+</div>
+
+<script>
+if(typeof Vue==='undefined'){document.body.innerHTML='<h1>Vue 未加载，请检查网络</h1>'}
+const {ref,onMounted,createApp}=Vue
+createApp({setup(){
+  const urlInput=ref('')
+  const loading=ref(false)
+  const apiOk=ref(false)
+  const result=ref(null)
+  const API='/tt/api/proxy'
+
+  async function checkAPI(){
+    try{
+      const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({method:'GET',path:'/settings',body:{}})})
+      const d=await r.json()
+      apiOk.value=d.ok
+    }catch(e){apiOk.value=false}
+  }
+
+  async function pasteUrl(){
+    try{const t=await navigator.clipboard.readText();urlInput.value=t}catch(e){}
+  }
+
+  async function start(){
+    const u=urlInput.value.trim();if(!u)return
+    loading.value=true;result.value=null
+    try{
+      // 1. Resolve short link
+      const s1=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({method:'POST',path:'/douyin/share',body:{text:u}})})
+      const s1d=await s1.json()
+      const sd=s1d?.data; if(!sd?.url){alert('链接解析失败，请确认 API 已启动且 Cookie 已配置');loading.value=false;return}
+
+      // 2. Extract detail_id
+      const did=sd.url.match(/video\/(\d+)/)||sd.url.match(/note\/(\d+)/)||sd.url.match(/modal_id=(\d+)/)
+      if(!did){alert('未能提取作品 ID: '+sd.url);loading.value=false;return}
+
+      // 3. Get detail
+      const s2=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({method:'POST',path:'/douyin/detail',body:{detail_id:did[1]}})})
+      const s2d=await s2.json()
+      const dd=s2d?.data
+      if(!dd.data){alert('获取详情失败');loading.value=false;return}
+
+      const item=dd.data.aweme_detail||dd.data
+      const r={
+        raw:dd.data,
+        desc:item.desc||'',
+        author:item.author?.nickname||'',
+        create_time:new Date((item.create_time||0)*1000).toLocaleString(),
+      }
+
+      // Check if it's an image/live photo post
+      const images=item.images
+      if(images&&images.length){
+        r.type=`图集 (${images.length}P)`+ (images.some(i=>i.live_photo) ? ' · 含实况' : '')
+        r.images=images.map((img,i)=>{
+          const dl=img.download_url_list||img.url_list||[]
+          return {
+            url:dl[0]||'',
+            thumb:(img.url_list||[])[0]||dl[0]||'',
+            width:img.width||0,
+            height:img.height||0,
+            live:!!img.live_photo,
+            live_url:img.live_photo? (img.video?.play_addr?.url_list||[])[0] : null,
+          }
+        })
+        r.cover=(item.images[0]?.url_list||[])[0]||''
+      }else if(item.video){
+        r.type='视频'
+        r.video_url=(item.video.play_addr?.url_list||[])[0]||''
+        r.cover=(item.video.cover?.url_list||[])[0]||''
+        r.music_url=(item.music?.play_url?.url_list||[])[0]||''
+      }
+
+      result.value=r
+    }catch(e){alert('请求失败: '+e.message)}
+    loading.value=false
+  }
+
+  function viewImage(url,title){
+    const w=window.open('','_blank')
+    if(w) w.document.write(`<img src="${url}" style="max-width:100%;max-height:100vh;display:block;margin:auto"><title>${title}</title>`)
+  }
+  function viewVideo(url,title){
+    const w=window.open('','_blank')
+    if(w) w.document.write(`<video src="${url}" controls autoplay style="max-width:100%;max-height:100vh;display:block;margin:auto"><title>${title}</title></video>`)
+  }
+
+  onMounted(()=>{checkAPI();setInterval(checkAPI,5000)})
+
+  return{urlInput,loading,apiOk,result,start,pasteUrl,viewImage,viewVideo,JSON}
+}}).mount('#app')
+</script>
+</body>
+</html>
