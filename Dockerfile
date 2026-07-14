@@ -3,14 +3,14 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # 安装系统依赖
-RUN apt-get update && apt-get install -y --no-install-recommends git \
-    build-essential \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y --no-install-recommends git \
+#     build-essential \
+#     python3-dev \
+#     && rm -rf /var/lib/apt/lists/*
 
 # 安装 Python 依赖
-RUN pip install --no-cache-dir fastapi uvicorn[standard]
-RUN pip install --no-cache-dir git+https://github.com/CharlesPikachu/videodl.git
+RUN pip install --no-cache-dir fastapi uvicorn[standard] videofetch
+# RUN pip install --no-cache-dir git+https://github.com/CharlesPikachu/videodl.git
 
 # 复制项目
 COPY . .
